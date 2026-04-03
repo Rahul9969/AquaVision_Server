@@ -5,8 +5,17 @@ export async function GET() {
   try {
     const snapshot = await db.collection('history')
       .where('is_protected', '==', true)
-      .orderBy('timestamp', 'desc').limit(200).get();
-    const logs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      .get();
+    let logs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    
+    // Sort in memory to avoid Firestore composite index requirement
+    logs.sort((a, b) => {
+      const tsA = (a as Record<string, unknown>).timestamp as number || 0;
+      const tsB = (b as Record<string, unknown>).timestamp as number || 0;
+      return tsB - tsA;
+    });
+    logs = logs.slice(0, 200);
+
     const speciesMap: Record<string, { count: number; lastSeen: number; locations: string[] }> = {};
     for (const log of logs) {
       const d = log as Record<string, unknown>;
