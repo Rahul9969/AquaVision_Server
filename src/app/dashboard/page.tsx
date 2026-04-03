@@ -71,9 +71,7 @@ export default function DashboardPage() {
       <header className="sticky top-0 z-50 bg-slate-950/80 backdrop-blur-xl border-b border-white/5">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-xl flex items-center justify-center">
-              <span className="text-white font-bold text-lg">A</span>
-            </div>
+            <img src="/logo.png" className="w-12 h-12 object-contain drop-shadow" alt="AquaVision Logo" />
             <div>
               <h1 className="text-white font-bold text-lg">AquaVision Monitor</h1>
               <p className="text-slate-500 text-xs">Real-time Fisheries Intelligence</p>
