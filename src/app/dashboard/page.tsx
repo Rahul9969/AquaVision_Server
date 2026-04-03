@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { LayoutDashboard, Fish, Shield, Users } from 'lucide-react';
 
 interface Stats {
   totalCatches: number;
@@ -59,10 +60,10 @@ export default function DashboardPage() {
   );
 
   const tabs = [
-    { id: 'overview' as const, label: 'Overview', icon: '📊' },
-    { id: 'logs' as const, label: 'Catch Logs', icon: '🐟' },
-    { id: 'protected' as const, label: 'Conservation', icon: '🛡️' },
-    { id: 'users' as const, label: 'Users', icon: '👥' },
+    { id: 'overview' as const, label: 'Overview', icon: <LayoutDashboard className="w-4 h-4" /> },
+    { id: 'logs' as const, label: 'Catch Logs', icon: <Fish className="w-4 h-4" /> },
+    { id: 'protected' as const, label: 'Conservation', icon: <Shield className="w-4 h-4" /> },
+    { id: 'users' as const, label: 'Users', icon: <Users className="w-4 h-4" /> },
   ];
 
   return (
@@ -89,7 +90,7 @@ export default function DashboardPage() {
         <div className="flex gap-1 bg-white/5 rounded-xl p-1 w-fit">
           {tabs.map(tab => (
             <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition ${activeTab === tab.id ? 'bg-cyan-500/20 text-cyan-300' : 'text-slate-400 hover:text-white'}`}>
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition ${activeTab === tab.id ? 'bg-cyan-500/20 text-cyan-300' : 'text-slate-400 hover:text-white'}`}>
               {tab.icon} {tab.label}
             </button>
           ))}
