@@ -222,7 +222,7 @@ function LogsTab({ logs }: { logs: LogEntry[] }) {
         <h3 className="text-white font-semibold text-lg">Recent Catch Logs</h3>
         <p className="text-slate-400 text-xs mt-1">Synced from AquaVision mobile app · Click on a log to view details</p>
       </div>
-      <div className="divide-y divide-white/5 max-h-[700px] overflow-y-auto">
+      <div className="divide-y divide-white/5 max-h-[700px] overflow-y-auto hide-scrollbar">
         {logs.map((log, i) => {
           const isExpanded = expandedId === (log.id || String(i));
           const { dateStr, timeStr } = formatDateTime(log.timestamp);
