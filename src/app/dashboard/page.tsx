@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { LayoutDashboard, Fish, Shield, Users } from 'lucide-react';
+import { LayoutDashboard, Fish, Shield, Users, ChevronDown, ChevronUp, MapPin, Clock, User, AlertTriangle, Tag } from 'lucide-react';
 
 interface Stats {
   totalCatches: number;
@@ -190,30 +190,163 @@ function OverviewTab({ stats }: { stats: Stats | null }) {
 }
 
 function LogsTab({ logs }: { logs: LogEntry[] }) {
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  const toggleExpand = (id: string) => {
+    setExpandedId(prev => prev === id ? null : id);
+  };
+
+  const formatDateTime = (timestamp: number) => {
+    const date = new Date(timestamp);
+    const dateStr = date.toLocaleDateString('en-IN', {
+      weekday: 'short', year: 'numeric', month: 'short', day: 'numeric'
+    });
+    const timeStr = date.toLocaleTimeString('en-IN', {
+      hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true
+    });
+    return { dateStr, timeStr };
+  };
+
+  const parseDetails = (details: string) => {
+    // Split on common separators to break into readable lines
+    const parts = details
+      .split(/[;,]/)
+      .map(s => s.trim())
+      .filter(s => s.length > 0);
+    return parts;
+  };
+
   return (
     <div className="bg-white/5 backdrop-blur border border-white/10 rounded-2xl overflow-hidden">
-      <div className="p-4 border-b border-white/5">
-        <h3 className="text-white font-semibold">Recent Catch Logs</h3>
-        <p className="text-slate-400 text-xs">Synced from AquaVision mobile app</p>
+      <div className="p-5 border-b border-white/5">
+        <h3 className="text-white font-semibold text-lg">Recent Catch Logs</h3>
+        <p className="text-slate-400 text-xs mt-1">Synced from AquaVision mobile app · Click on a log to view details</p>
       </div>
-      <div className="divide-y divide-white/5 max-h-[600px] overflow-y-auto">
-        {logs.map((log, i) => (
-          <div key={i} className={`p-4 flex gap-4 hover:bg-white/5 transition ${log.is_protected ? 'border-l-2 border-red-500' : ''}`}>
-            {log.image_urls?.[0] && <img src={log.image_urls[0]} alt="" className="w-16 h-16 rounded-lg object-cover" />}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <h4 className="text-white text-sm font-medium truncate">{log.title}</h4>
-                {log.is_protected && <span className="px-1.5 py-0.5 bg-red-500/20 text-red-300 text-[10px] rounded-full font-medium">PROTECTED</span>}
-              </div>
-              <p className="text-slate-400 text-xs mt-0.5 truncate">{log.details}</p>
-              <div className="flex items-center gap-3 mt-1.5">
-                <span className="text-slate-500 text-[11px]">{new Date(log.timestamp).toLocaleString()}</span>
-                {log.location?.name && <span className="text-slate-500 text-[11px]">📍 {log.location.name}</span>}
-                {log.user?.name && <span className="text-slate-500 text-[11px]">👤 {log.user.name}</span>}
-              </div>
+      <div className="divide-y divide-white/5 max-h-[700px] overflow-y-auto">
+        {logs.map((log, i) => {
+          const isExpanded = expandedId === (log.id || String(i));
+          const { dateStr, timeStr } = formatDateTime(log.timestamp);
+          const detailParts = parseDetails(log.details);
+
+          return (
+            <div key={log.id || i} className={`transition-all duration-300 ${log.is_protected ? 'border-l-2 border-red-500' : ''}`}>
+              {/* Collapsed Header - Always visible */}
+              <button
+                onClick={() => toggleExpand(log.id || String(i))}
+                className="w-full p-4 flex items-center gap-4 hover:bg-white/5 transition text-left cursor-pointer"
+              >
+                {log.image_urls?.[0] && (
+                  <img src={log.image_urls[0]} alt="" className="w-14 h-14 rounded-xl object-cover flex-shrink-0 border border-white/10" />
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h4 className="text-white text-sm font-semibold">{log.title}</h4>
+                    {log.is_protected && (
+                      <span className="flex items-center gap-1 px-2 py-0.5 bg-red-500/20 text-red-300 text-[10px] rounded-full font-bold uppercase tracking-wide">
+                        <AlertTriangle className="w-3 h-3" /> Protected
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-slate-500 text-xs mt-1">{dateStr} · {timeStr}</p>
+                </div>
+                <div className="flex-shrink-0 text-slate-500">
+                  {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                </div>
+              </button>
+
+              {/* Expanded Details */}
+              {isExpanded && (
+                <div className="px-4 pb-5 pt-0 animate-in fade-in duration-200">
+                  <div className="ml-0 md:ml-[72px] space-y-4">
+                    {/* Image enlarged */}
+                    {log.image_urls?.[0] && (
+                      <div className="rounded-xl overflow-hidden border border-white/10 w-fit">
+                        <img src={log.image_urls[0]} alt="" className="max-w-[280px] max-h-[200px] object-cover" />
+                      </div>
+                    )}
+
+                    {/* Details broken into readable lines */}
+                    <div className="bg-white/5 rounded-xl p-4 space-y-2 border border-white/5">
+                      <h5 className="text-slate-300 text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5 mb-3">
+                        <Tag className="w-3.5 h-3.5" /> Details
+                      </h5>
+                      {detailParts.length > 1 ? (
+                        <ul className="space-y-1.5">
+                          {detailParts.map((part, idx) => (
+                            <li key={idx} className="text-slate-300 text-sm flex items-start gap-2">
+                              <span className="text-cyan-500/60 mt-1.5 w-1.5 h-1.5 rounded-full bg-cyan-500/60 flex-shrink-0" />
+                              {part}
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="text-slate-300 text-sm leading-relaxed">{log.details}</p>
+                      )}
+                    </div>
+
+                    {/* Metadata Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {/* Date & Time */}
+                      <div className="bg-white/5 rounded-xl p-3 border border-white/5">
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <Clock className="w-4 h-4 text-cyan-400" />
+                          <span className="text-slate-400 text-xs font-medium uppercase tracking-wider">Date & Time</span>
+                        </div>
+                        <p className="text-white text-sm font-medium">{dateStr}</p>
+                        <p className="text-slate-300 text-sm">{timeStr}</p>
+                      </div>
+
+                      {/* Location */}
+                      {(log.location?.name || log.location?.lat) && (
+                        <div className="bg-white/5 rounded-xl p-3 border border-white/5">
+                          <div className="flex items-center gap-2 mb-1.5">
+                            <MapPin className="w-4 h-4 text-pink-400" />
+                            <span className="text-slate-400 text-xs font-medium uppercase tracking-wider">Location</span>
+                          </div>
+                          {log.location?.name && (
+                            <p className="text-white text-sm font-medium">{log.location.name}</p>
+                          )}
+                          {log.location?.lat && log.location?.lng && (
+                            <p className="text-slate-400 text-xs mt-1 font-mono">
+                              Lat: {log.location.lat.toFixed(6)}, Lng: {log.location.lng.toFixed(6)}
+                            </p>
+                          )}
+                        </div>
+                      )}
+
+                      {/* User */}
+                      {log.user?.name && (
+                        <div className="bg-white/5 rounded-xl p-3 border border-white/5">
+                          <div className="flex items-center gap-2 mb-1.5">
+                            <User className="w-4 h-4 text-blue-400" />
+                            <span className="text-slate-400 text-xs font-medium uppercase tracking-wider">Logged By</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {log.user?.pfp_url && (
+                              <img src={log.user.pfp_url} alt="" className="w-6 h-6 rounded-full object-cover border border-white/10" />
+                            )}
+                            <p className="text-white text-sm font-medium">{log.user.name}</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Protected Warning */}
+                    {log.is_protected && (
+                      <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 flex items-start gap-3">
+                        <AlertTriangle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-red-300 text-sm font-semibold">Protected Species Alert</p>
+                          <p className="text-red-400/80 text-xs mt-1">This species is protected under the Wildlife Protection Act. Catching, trading, or possessing this species is illegal.</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
-          </div>
-        ))}
+          );
+        })}
         {logs.length === 0 && <div className="p-8 text-center text-slate-500">No logs yet. Sync data from the AquaVision app.</div>}
       </div>
     </div>
@@ -222,28 +355,91 @@ function LogsTab({ logs }: { logs: LogEntry[] }) {
 
 function ProtectedTab() {
   const [data, setData] = useState<{ totalProtectedDetections: number; speciesSummary: { species: string; count: number; lastSeen: string; locations: string[] }[] } | null>(null);
+  const [expandedSpecies, setExpandedSpecies] = useState<string | null>(null);
   useEffect(() => {
     fetch('/api/protected-species').then(r => r.json()).then(d => { if (d.success) setData(d.data); });
   }, []);
   if (!data) return <div className="animate-spin w-6 h-6 border-2 border-cyan-400 border-t-transparent rounded-full mx-auto mt-12" />;
+
+  const formatLastSeen = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return {
+      date: date.toLocaleDateString('en-IN', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' }),
+      time: date.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })
+    };
+  };
+
   return (
     <div className="space-y-4">
       <StatCard label="Total Protected Detections" value={data.totalProtectedDetections} color="text-red-400" sub="Wildlife Protection Act flagged species" />
       <div className="bg-white/5 backdrop-blur border border-white/10 rounded-2xl p-5">
-        <h3 className="text-white font-semibold mb-4">Protected Species Encounters</h3>
+        <h3 className="text-white font-semibold text-lg mb-2">Protected Species Encounters</h3>
+        <p className="text-slate-400 text-xs mb-4">Click on a species to view details</p>
         <div className="space-y-3">
-          {data.speciesSummary.map((sp, i) => (
-            <div key={i} className="p-3 bg-red-500/5 border border-red-500/10 rounded-xl">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h4 className="text-white font-medium">{sp.species}</h4>
-                  <p className="text-slate-400 text-xs mt-0.5">Last seen: {new Date(sp.lastSeen).toLocaleDateString()}</p>
-                  <p className="text-slate-500 text-xs">📍 {sp.locations.join(', ')}</p>
-                </div>
-                <span className="px-3 py-1 bg-red-500/20 text-red-300 text-sm font-bold rounded-full">{sp.count}</span>
+          {data.speciesSummary.map((sp, i) => {
+            const isExpanded = expandedSpecies === sp.species;
+            const { date, time } = formatLastSeen(sp.lastSeen);
+            return (
+              <div key={i} className="bg-red-500/5 border border-red-500/10 rounded-xl overflow-hidden transition-all">
+                {/* Header - clickable */}
+                <button
+                  onClick={() => setExpandedSpecies(prev => prev === sp.species ? null : sp.species)}
+                  className="w-full p-4 flex justify-between items-center hover:bg-red-500/10 transition cursor-pointer text-left"
+                >
+                  <div className="flex items-center gap-3">
+                    <AlertTriangle className="w-5 h-5 text-red-400 flex-shrink-0" />
+                    <div>
+                      <h4 className="text-white font-semibold">{sp.species}</h4>
+                      <p className="text-slate-400 text-xs mt-0.5">Last seen: {date}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="px-3 py-1 bg-red-500/20 text-red-300 text-sm font-bold rounded-full">{sp.count}</span>
+                    {isExpanded ? <ChevronUp className="w-4 h-4 text-slate-500" /> : <ChevronDown className="w-4 h-4 text-slate-500" />}
+                  </div>
+                </button>
+
+                {/* Expanded details */}
+                {isExpanded && (
+                  <div className="px-4 pb-4 space-y-3 border-t border-red-500/10 pt-3">
+                    {/* Date & Time */}
+                    <div className="bg-white/5 rounded-xl p-3 border border-white/5">
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <Clock className="w-4 h-4 text-cyan-400" />
+                        <span className="text-slate-400 text-xs font-medium uppercase tracking-wider">Last Seen</span>
+                      </div>
+                      <p className="text-white text-sm font-medium">{date}</p>
+                      <p className="text-slate-300 text-sm">{time}</p>
+                    </div>
+
+                    {/* Locations listed individually */}
+                    {sp.locations.length > 0 && (
+                      <div className="bg-white/5 rounded-xl p-3 border border-white/5">
+                        <div className="flex items-center gap-2 mb-2">
+                          <MapPin className="w-4 h-4 text-pink-400" />
+                          <span className="text-slate-400 text-xs font-medium uppercase tracking-wider">Detection Locations</span>
+                        </div>
+                        <ul className="space-y-1.5">
+                          {sp.locations.map((loc, idx) => (
+                            <li key={idx} className="text-slate-300 text-sm flex items-center gap-2">
+                              <span className="w-1.5 h-1.5 rounded-full bg-pink-400/60 flex-shrink-0" />
+                              {loc}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Alert */}
+                    <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3 flex items-start gap-3">
+                      <Shield className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
+                      <p className="text-red-400/80 text-xs">This species is protected under the Wildlife Protection Act. All encounters are automatically flagged and logged for conservation monitoring.</p>
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
           {data.speciesSummary.length === 0 && <p className="text-slate-500 text-center py-4">No protected species detected yet</p>}
         </div>
       </div>
